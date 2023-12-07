@@ -133,8 +133,15 @@ def main(args=None):
             # Acquire lock before entering critical area to prevent overlapping data queries
             lock.acquire()
             try:
-                # perform synchronized block:
-                node.sensor.get_calib_status()
+                while True:
+                    try:
+                        # perform synchronized block:
+                        node.sensor.get_calib_status()
+                    except BusOverRunException:
+                        # data not available yet, try again
+                        continue
+                    else:
+                        break
             except Exception as e:  # noqa: B902
                 node.get_logger().warn('Receiving calibration status failed with %s:"%s"'
                                        % (type(e).__name__, e))
